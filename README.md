@@ -13,7 +13,7 @@ claude plugin install box-client-file-inventory@lea-wealth-plugins
 
 Replace `box-client-file-inventory` with whichever skill you want.
 
-**Cowork** — Mirror our public repo to a private repo in your org, then connect it in Organization Settings → Plugins → GitHub. Reach out and we'll walk you through it.
+**Cowork** — Mirror [LEA-Technologies/lea-wealth-plugins](https://github.com/LEA-Technologies/lea-wealth-plugins) to a private repo in your org, then connect it in Organization Settings → Plugins → GitHub. Reach out and we'll walk you through it.
 
 ## Available Skills
 
