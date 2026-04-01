@@ -1,0 +1,10 @@
+{
+  "name": "lea-test-plugin",
+  "version": "1.1.0",
+  "description": "LEA test plugin \u2014 verifies marketplace install flow",
+  "author": {
+    "name": "LEA Technologies",
+    "email": "claude-skills@getlea.io"
+  },
+  "skills": "./skills/"
+}

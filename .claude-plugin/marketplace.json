@@ -1,0 +1,78 @@
+{
+  "name": "lea-wealth-plugins",
+  "owner": {
+    "name": "LEA Technologies",
+    "email": "claude-skills@getlea.io"
+  },
+  "metadata": {
+    "description": "Self-serve wealth management skills for Claude Code and Claude Cowork"
+  },
+  "plugins": [
+    {
+      "name": "lea-test-plugin",
+      "source": "./plugins/lea-test-plugin",
+      "description": "LEA Skills for Wealth Management -- overview of available skills, supported platforms, and how to get started",
+      "version": "1.1.0"
+    },
+    {
+      "name": "box-client-file-inventory",
+      "source": "./plugins/box-client-file-inventory",
+      "description": "Takes inventory of your Box vault — every file across all client and household folders, organized by document type (agreements, tax docs, statements, and more). Generates an HTML report you can open in your browser with one click.",
+      "version": "1.1.0"
+    },
+    {
+      "name": "box-client-agreement-organizer",
+      "source": "./plugins/box-client-agreement-organizer",
+      "description": "Finds client agreements (CAs, IMAs, IPSs, CEAs) across your Box vault. Coverage report + optional organize to a central folder.",
+      "version": "1.1.0"
+    },
+    {
+      "name": "sharepoint-client-file-inventory",
+      "source": "./plugins/sharepoint-client-file-inventory",
+      "description": "Takes inventory of your SharePoint vault — every file across all client and household folders, organized by document type.",
+      "version": "1.1.0"
+    },
+    {
+      "name": "sharepoint-client-agreement-organizer",
+      "source": "./plugins/sharepoint-client-agreement-organizer",
+      "description": "Finds client agreements across your SharePoint vault. Coverage report + optional organize.",
+      "version": "1.1.0"
+    },
+    {
+      "name": "egnyte-client-file-inventory",
+      "source": "./plugins/egnyte-client-file-inventory",
+      "description": "Takes inventory of your Egnyte vault — every file across all client and household folders, organized by document type.",
+      "version": "1.1.0"
+    },
+    {
+      "name": "egnyte-client-agreement-organizer",
+      "source": "./plugins/egnyte-client-agreement-organizer",
+      "description": "Finds client agreements across your Egnyte vault. Coverage report + optional organize.",
+      "version": "1.1.0"
+    },
+    {
+      "name": "wealthbox-data-completeness-audit",
+      "source": "./plugins/wealthbox-data-completeness-audit",
+      "description": "Scan your Wealthbox CRM for missing and incomplete contact data. Generates an interactive report with completeness scores, field coverage, and CSV export.",
+      "version": "1.1.0"
+    },
+    {
+      "name": "practifi-data-completeness-audit",
+      "source": "./plugins/practifi-data-completeness-audit",
+      "description": "Scan your Practifi CRM for missing and incomplete contact data. Generates an interactive report with completeness scores, field coverage, and CSV export.",
+      "version": "1.1.0"
+    },
+    {
+      "name": "wealthbox-agreement-compliance",
+      "source": "./plugins/wealthbox-agreement-compliance",
+      "description": "Cross-reference Wealthbox households with your document vault (Box, SharePoint, or Egnyte) to find which clients are missing required agreements. Compliance gap report with CSV export.",
+      "version": "1.1.0"
+    },
+    {
+      "name": "practifi-agreement-compliance",
+      "source": "./plugins/practifi-agreement-compliance",
+      "description": "Cross-reference Practifi households with your document vault (Box, SharePoint, or Egnyte) to find which clients are missing required agreements. Compliance gap report with CSV export.",
+      "version": "1.1.0"
+    }
+  ]
+}

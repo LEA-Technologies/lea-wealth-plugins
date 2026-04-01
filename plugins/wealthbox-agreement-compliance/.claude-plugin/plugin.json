@@ -1,0 +1,10 @@
+{
+  "name": "wealthbox-agreement-compliance",
+  "version": "1.1.0",
+  "description": "Pull households from Wealthbox, scan your document vault (Box, SharePoint, or Egnyte) for client agreements, and generate a compliance gap report showing which households are missing required agreements.",
+  "author": {
+    "name": "LEA Technologies",
+    "email": "claude-skills@getlea.io"
+  },
+  "skills": "./skills/"
+}

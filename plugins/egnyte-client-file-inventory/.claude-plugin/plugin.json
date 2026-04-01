@@ -1,0 +1,10 @@
+{
+  "name": "egnyte-client-file-inventory",
+  "version": "1.1.0",
+  "description": "Takes inventory of your Egnyte vault \u2014 every file across all client and household folders, organized by document type (agreements, tax docs, statements, and more). Generates an HTML report you can open in your browser with one click.",
+  "author": {
+    "name": "LEA Technologies",
+    "email": "claude-skills@getlea.io"
+  },
+  "skills": "./skills/"
+}

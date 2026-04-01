@@ -1,0 +1,10 @@
+{
+  "name": "egnyte-client-agreement-organizer",
+  "version": "1.1.0",
+  "description": "Finds client agreements (CAs, IMAs, IPSs, CEAs) across your Egnyte vault. Coverage report + optional organize to a central folder.",
+  "author": {
+    "name": "LEA Technologies",
+    "email": "claude-skills@getlea.io"
+  },
+  "skills": "./skills/"
+}

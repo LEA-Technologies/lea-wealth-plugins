@@ -1,0 +1,10 @@
+{
+  "name": "practifi-data-completeness-audit",
+  "version": "1.1.0",
+  "description": "Scan your Practifi CRM for missing and incomplete contact data. Generates an interactive report with completeness scores, field coverage, and CSV export.",
+  "author": {
+    "name": "LEA Technologies",
+    "email": "claude-skills@getlea.io"
+  },
+  "skills": "./skills/"
+}
