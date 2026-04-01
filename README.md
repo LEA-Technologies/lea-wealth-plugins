@@ -4,17 +4,16 @@ Self-serve wealth management skills for [Claude Code](https://claude.com/claude-
 
 ## Install
 
-Add the LEA marketplace:
+**Claude Code** — 2 commands, 30 seconds:
 
 ```
 claude plugin marketplace add LEA-Technologies/lea-wealth-plugins
+claude plugin install box-client-file-inventory@lea-wealth-plugins
 ```
 
-Then install any plugin:
+Replace `box-client-file-inventory` with whichever skill you want.
 
-```
-claude plugin install <plugin-name>@lea-wealth-plugins
-```
+**Cowork** — Mirror our public repo to a private repo in your org, then connect it in Organization Settings → Plugins → GitHub. Reach out and we'll walk you through it.
 
 ## Available Skills
 
