@@ -24,9 +24,9 @@ function loadToken() {
 
 function saveToken(data) {
   if (!fs.existsSync(CREDS_DIR)) {
-    fs.mkdirSync(CREDS_DIR, { recursive: true });
+    fs.mkdirSync(CREDS_DIR, { recursive: true, mode: 0o700 });
   }
-  fs.writeFileSync(TOKEN_FILE, JSON.stringify(data, null, 2));
+  fs.writeFileSync(TOKEN_FILE, JSON.stringify(data, null, 2), { mode: 0o600 });
 }
 
 function getApiToken() {
@@ -61,7 +61,9 @@ async function apiRequest(method, path, body, auth = true) {
 // ── Public API ──────────────────────────────────────────────
 
 async function register(email, firmName) {
-  const data = await apiRequest('POST', '/api/register', { email, firm_name: firmName }, false);
+  const body = { email };
+  if (firmName) body.firm_name = firmName;
+  const data = await apiRequest('POST', '/api/register', body, false);
   saveToken({
     api_token: data.api_token,
     customer_id: data.customer_id,
@@ -76,7 +78,7 @@ async function getEgnyteAuthUrl(domain) {
 }
 
 async function pollEgnyteStatus(sessionId) {
-  return apiRequest('GET', `/api/auth/egnyte/status?session_id=${sessionId}`);
+  return apiRequest('GET', `/api/auth/egnyte/status?session_id=${encodeURIComponent(sessionId)}`);
 }
 
 async function getEgnyteCredentials() {
@@ -88,11 +90,11 @@ async function refreshEgnyteToken() {
 }
 
 async function loadConfig(skillName) {
-  return apiRequest('GET', `/api/config/${skillName}`);
+  return apiRequest('GET', `/api/config/${encodeURIComponent(skillName)}`);
 }
 
 async function saveConfig(skillName, config) {
-  return apiRequest('PUT', `/api/config/${skillName}`, { config });
+  return apiRequest('PUT', `/api/config/${encodeURIComponent(skillName)}`, { config });
 }
 
 async function logUsage(skillName) {

@@ -25,9 +25,9 @@ function loadToken() {
 
 function saveToken(data) {
   if (!fs.existsSync(CREDS_DIR)) {
-    fs.mkdirSync(CREDS_DIR, { recursive: true });
+    fs.mkdirSync(CREDS_DIR, { recursive: true, mode: 0o700 });
   }
-  fs.writeFileSync(TOKEN_FILE, JSON.stringify(data, null, 2));
+  fs.writeFileSync(TOKEN_FILE, JSON.stringify(data, null, 2), { mode: 0o600 });
 }
 
 function getApiToken() {

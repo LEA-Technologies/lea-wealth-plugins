@@ -24,9 +24,9 @@ function loadToken() {
 
 function saveToken(data) {
   if (!fs.existsSync(CREDS_DIR)) {
-    fs.mkdirSync(CREDS_DIR, { recursive: true });
+    fs.mkdirSync(CREDS_DIR, { recursive: true, mode: 0o700 });
   }
-  fs.writeFileSync(TOKEN_FILE, JSON.stringify(data, null, 2));
+  fs.writeFileSync(TOKEN_FILE, JSON.stringify(data, null, 2), { mode: 0o600 });
 }
 
 function getApiToken() {
@@ -81,7 +81,7 @@ async function getPractifiAuthUrl() {
 }
 
 async function pollPractifiStatus(sessionId) {
-  return apiRequest('GET', `/api/auth/practifi/status?session_id=${sessionId}`);
+  return apiRequest('GET', `/api/auth/practifi/status?session_id=${encodeURIComponent(sessionId)}`);
 }
 
 async function getPractifiCredentials() {
