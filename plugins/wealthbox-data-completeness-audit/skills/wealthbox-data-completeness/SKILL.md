@@ -71,7 +71,7 @@ Operations teams, compliance officers, and advisors at RIAs and wealth managemen
 | **Audit** | Pull all contacts and analyze 14 completeness fields |
 | **Report** | Generate an HTML report with scores, field coverage, and CSV export |
 
-> Your data stays between you and Wealthbox. LEA encrypts credentials locally and never uses your data for AI training.
+> Credentials stored encrypted on LEA servers. All analysis runs locally — your data flows directly between your machine and Wealthbox, never through LEA.
 
 ---
 

@@ -74,7 +74,7 @@ Wealth management firms that need to audit agreement coverage or find missing cl
 | **Deduplicate** | Flag duplicate agreements across households |
 | **Organize** | Optionally copy agreements to a central folder with standardized names |
 
-> Your Egnyte credentials are encrypted. File scanning runs on your machine — LEA never sees your files.
+> Credentials stored encrypted on LEA servers. All scanning runs locally — your files flow directly between your machine and Egnyte, never through LEA.
 
 ---
 

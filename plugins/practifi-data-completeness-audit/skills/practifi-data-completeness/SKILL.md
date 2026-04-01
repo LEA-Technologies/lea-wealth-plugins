@@ -72,7 +72,7 @@ Operations teams, compliance officers, and advisors at RIAs and wealth managemen
 | **Audit** | Pull all contacts and analyze completeness across 14 fields |
 | **Report** | Generate an HTML report with scores, field coverage, and CSV export |
 
-> Your Practifi credentials are encrypted and stored on LEA's infrastructure. All data analysis runs locally on your machine -- LEA never accesses or stores your CRM data.
+> Credentials stored encrypted on LEA servers. All analysis runs locally — your data flows directly between your machine and Practifi, never through LEA.
 
 ---
 

@@ -69,7 +69,7 @@ Display:
 | **Who** | Compliance officers, operations teams, and advisors at RIAs and wealth management firms using Wealthbox with Box, SharePoint, or Egnyte. |
 | **How** | Connects to Wealthbox via API token and to your vault via OAuth. Matches household names to vault folders, scans for agreement files, and cross-references the results. |
 
-> Your data stays between you and your systems. LEA encrypts credentials locally and never uses your data for AI training.
+> Credentials stored encrypted on LEA servers. All processing runs locally — your data flows directly between your machine and your platforms, never through LEA.
 
 Prompt for email (plain text, NOT AskUserQuestion):
 

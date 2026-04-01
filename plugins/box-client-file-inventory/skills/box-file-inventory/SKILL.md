@@ -72,7 +72,7 @@ Wealth management firms that store client documents in Box and want a clear pict
 | **Inventory** | Catalog every file and tag it by document type |
 | **Report** | Generate an HTML report with stats, categories, and CSV export |
 
-> Your Box credentials are encrypted and stored on LEA's infrastructure. All file scanning runs locally on your machine — LEA never accesses or stores your files or file data.
+> Credentials stored encrypted on LEA servers. All scanning runs locally — your files flow directly between your machine and Box, never through LEA.
 
 ---
 
