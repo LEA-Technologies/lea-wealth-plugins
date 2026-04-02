@@ -127,9 +127,9 @@ calc_new_version() {
 
 # Main release function
 main() {
-  local total_steps=6
+  local total_steps=7
   if $DRY_RUN; then
-    total_steps=3
+    total_steps=4
   fi
 
   # Read current version
@@ -194,6 +194,18 @@ main() {
       exit 1
     fi
     print_success "GitHub CLI available"
+
+    # main must be up to date with origin
+    git -C "$REPO_ROOT" fetch origin main --quiet
+    local local_sha remote_sha
+    local_sha=$(git -C "$REPO_ROOT" rev-parse HEAD)
+    remote_sha=$(git -C "$REPO_ROOT" rev-parse origin/main)
+    if [ "$local_sha" != "$remote_sha" ]; then
+      print_error "Local main is not up to date with origin/main"
+      echo -e "${YELLOW}  Run: git pull --ff-only origin main${NC}"
+      exit 1
+    fi
+    print_success "main is up to date with origin"
   else
     print_success "Skipping checks (dry run)"
   fi
@@ -201,8 +213,55 @@ main() {
   print_success "Current version: $current_version"
   print_success "New version: $new_version"
 
-  # Step 2: Enumerate files
-  print_step 2 $total_steps "Files to update"
+  # Step 2: Security checks
+  print_step 2 $total_steps "Security checks"
+
+  # Verify all copies of lea-skills-api.js are identical
+  local api_js_files=("$REPO_ROOT"/plugins/*/scripts/lea-skills-api.js)
+  if [ ${#api_js_files[@]} -gt 0 ]; then
+    local reference_checksum
+    reference_checksum=$(md5 -q "${api_js_files[0]}")
+    local api_js_ok=true
+    for f in "${api_js_files[@]}"; do
+      if [ "$(md5 -q "$f")" != "$reference_checksum" ]; then
+        print_error "lea-skills-api.js mismatch: ${f#"$REPO_ROOT"/}"
+        api_js_ok=false
+      fi
+    done
+    if $api_js_ok; then
+      print_success "lea-skills-api.js identical across ${#api_js_files[@]} plugins"
+    else
+      exit 1
+    fi
+  fi
+
+  # Scan for non-HTTPS API endpoints in plugin code
+  if grep -r 'LEA_SKILLS_API\|skills\.getlea\.io' "$REPO_ROOT/plugins/" --include='*.js' -l 2>/dev/null | xargs grep -l 'http://' 2>/dev/null; then
+    print_error "Found non-HTTPS API endpoint in plugin code"
+    exit 1
+  fi
+  print_success "No non-HTTPS API endpoints found"
+
+  # npm audit on each plugin's scripts directory
+  local audit_failed=false
+  for dir in "$REPO_ROOT"/plugins/*/scripts; do
+    if [ -f "$dir/package.json" ]; then
+      local plugin_name
+      plugin_name=$(basename "$(dirname "$dir")")
+      if ! npm audit --prefix "$dir" --audit-level=high --omit=dev 2>/dev/null 1>/dev/null; then
+        print_error "npm audit failed: $plugin_name"
+        audit_failed=true
+      fi
+    fi
+  done
+  if $audit_failed; then
+    echo -e "${YELLOW}  Fix vulnerabilities before releasing: npm audit fix --prefix plugins/<name>/scripts${NC}"
+    exit 1
+  fi
+  print_success "npm audit passed for all plugins"
+
+  # Step 3: Enumerate files
+  print_step 3 $total_steps "Files to update"
 
   local file_count=0
   local relative_path
@@ -219,8 +278,8 @@ main() {
 
   print_success "$file_count files will be updated"
 
-  # Step 3: Update version in all files
-  print_step 3 $total_steps "Update versions"
+  # Step 4: Update version in all files
+  print_step 4 $total_steps "Update versions"
 
   if $DRY_RUN; then
     print_warning "DRY RUN — no files modified"
@@ -246,6 +305,8 @@ main() {
   echo "  4. Push commit + tag to origin"
   echo "  5. Create GitHub Release"
   echo ""
+  echo -e "  ${GREEN}✓${NC} Security checks already passed"
+  echo ""
 
   read -p "Type 'yes' to release: " -r
   echo
@@ -267,15 +328,15 @@ main() {
   done
   print_success "Updated ${#PLUGIN_JSONS[@]} plugin.json files"
 
-  # Step 4: Commit
-  print_step 4 $total_steps "Commit version bump"
+  # Step 5: Commit
+  print_step 5 $total_steps "Commit version bump"
 
-  git -C "$REPO_ROOT" add -A
+  git -C "$REPO_ROOT" add "$MARKETPLACE_JSON" "${PLUGIN_JSONS[@]}"
   git -C "$REPO_ROOT" commit -m "Release v${new_version}"
   print_success "Committed: Release v${new_version}"
 
-  # Step 5: Tag
-  print_step 5 $total_steps "Create release tag"
+  # Step 6: Tag
+  print_step 6 $total_steps "Create release tag"
 
   git -C "$REPO_ROOT" tag -a "v${new_version}" -m "Release v${new_version}"
   print_success "Created tag: v${new_version}"
@@ -284,8 +345,8 @@ main() {
   git -C "$REPO_ROOT" push origin "v${new_version}"
   print_success "Pushed commit and tag to origin"
 
-  # Step 6: GitHub Release
-  print_step 6 $total_steps "Create GitHub Release"
+  # Step 7: GitHub Release
+  print_step 7 $total_steps "Create GitHub Release"
 
   local gh_release_url=""
   local previous_tag
