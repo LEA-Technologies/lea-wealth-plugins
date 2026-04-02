@@ -269,6 +269,10 @@ async function cmdSaveConfig(skill, jsonStr) {
     fail(`Invalid JSON: ${e.message}`);
   }
 
+  if (typeof config !== 'object' || config === null) {
+    fail('Expected JSON object');
+  }
+
   try {
     const result = await api.saveConfig(skill, config);
     output({ success: true, skill_name: skill, config: result.config });

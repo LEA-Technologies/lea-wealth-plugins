@@ -4,6 +4,10 @@
 
 const fs = require('fs');
 
+function escapeHtml(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 const FILE_TYPE_CATEGORIES = {
   'PDFs': ['.pdf'],
   'Word': ['.doc', '.docx'],
@@ -95,7 +99,7 @@ function generateInventoryReport(households, firmName) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SharePoint File Inventory Report${firmName ? ' — ' + firmName : ''}</title>
+  <title>SharePoint File Inventory Report${firmName ? ' — ' + escapeHtml(firmName) : ''}</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @media print { .no-print { display: none; } }
@@ -112,7 +116,7 @@ function generateInventoryReport(households, firmName) {
             ${LEA_LOGO_SVG}
             <div class="border-l border-slate-200 pl-4">
               <h1 class="text-2xl font-bold text-slate-900">SharePoint File Inventory <span class="text-base font-normal text-slate-400">— a LEA Claude Skill</span></h1>
-              <p class="text-slate-500 text-sm">${firmName || 'Client File Report'}</p>
+              <p class="text-slate-500 text-sm">${firmName ? escapeHtml(firmName) : 'Client File Report'}</p>
             </div>
           </div>
         </div>
@@ -148,7 +152,7 @@ function generateInventoryReport(households, firmName) {
         <tbody>
           ${householdRows.map((h, i) => `
           <tr class="border-b border-slate-100 ${i % 2 === 0 ? '' : 'bg-slate-50/50'} hover:bg-slate-50">
-            <td class="py-2.5 px-4 font-medium text-slate-900 sticky left-0 ${i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}">${h.name}</td>
+            <td class="py-2.5 px-4 font-medium text-slate-900 sticky left-0 ${i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}">${escapeHtml(h.name)}</td>
             <td class="py-2.5 px-2 text-center font-medium ${h.totalFiles === 0 ? 'text-amber-600' : 'text-slate-700'}">${h.totalFiles}</td>
             <td class="py-2.5 px-2 text-center border-r border-slate-200">${h.unknownCount > 0 ? `<span class="inline-block bg-amber-100 text-amber-700 text-xs font-semibold rounded-full w-7 h-7 leading-7">${h.unknownCount}</span>` : `<span class="text-slate-300 text-xs">0</span>`}</td>
             ${categoryTags.map(tag => {
@@ -193,7 +197,7 @@ function generateInventoryReport(households, firmName) {
   </div>
 
   <script>
-    const reportData = ${JSON.stringify(households)};
+    const reportData = ${JSON.stringify(households).replace(/<\//g, '<\\/')};
 
     function exportCSV() {
       const CATEGORIES = [

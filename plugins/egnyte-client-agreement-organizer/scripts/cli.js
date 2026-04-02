@@ -239,6 +239,10 @@ async function cmdOrganizeAgreements(jsonStr) {
     fail(`Invalid JSON: ${e.message}`);
   }
 
+  if (typeof plan !== 'object' || plan === null) {
+    fail('Expected JSON object');
+  }
+
   const { target_path, agreements } = plan;
   if (!agreements || !Array.isArray(agreements)) {
     fail('JSON must include agreements array');
@@ -337,6 +341,10 @@ async function cmdSaveConfig(skill, jsonStr) {
     config = JSON.parse(jsonStr);
   } catch (e) {
     fail(`Invalid JSON: ${e.message}`);
+  }
+
+  if (typeof config !== 'object' || config === null) {
+    fail('Expected JSON object');
   }
 
   try {

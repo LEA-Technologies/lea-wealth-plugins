@@ -49,7 +49,7 @@ function generateComplianceReport(data) {
             ${LEA_LOGO_SVG}
             <div class="border-l border-slate-200 pl-4">
               <h1 class="text-2xl font-bold text-slate-900">Agreement Compliance Report <span class="text-base font-normal text-slate-400">- a LEA Claude Skill</span></h1>
-              <p class="text-slate-500 text-sm">Practifi + ${platformLabel}</p>
+              <p class="text-slate-500 text-sm">Practifi + ${escapeHtml(platformLabel)}</p>
             </div>
           </div>
         </div>
@@ -180,8 +180,8 @@ function generateComplianceReport(data) {
   </div>
 
   <script>
-    const reportData = ${JSON.stringify(matched)};
-    const unmatchedPfData = ${JSON.stringify(unmatchedPf)};
+    const reportData = ${JSON.stringify(matched).replace(/<\//g, '<\\/')};
+    const unmatchedPfData = ${JSON.stringify(unmatchedPf).replace(/<\//g, '<\\/')};
 
     function exportCSV() {
       const headers = ['Household', 'Vault Folder', 'Members', 'Total Files', 'CEA', 'IMA', 'IPS', 'CA', 'Status'];

@@ -4,6 +4,10 @@
 
 const fs = require('fs');
 
+function escapeHtml(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 // LEA logo SVG (inline for offline rendering)
 const LEA_LOGO_SVG = `<svg width="120" height="38" viewBox="0 0 933 295" fill="none" xmlns="http://www.w3.org/2000/svg">
   <path d="M93.0479 75.6914V219.524H248.387" stroke="#2E483E" stroke-width="36.6017" stroke-miterlimit="16" stroke-linecap="square"/>
@@ -67,7 +71,7 @@ function generateAgreementReport(households, firmName) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Client Agreement Coverage${firmName ? ' — ' + firmName : ''}</title>
+  <title>Client Agreement Coverage${firmName ? ' — ' + escapeHtml(firmName) : ''}</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @media print { .no-print { display: none; } }
@@ -84,7 +88,7 @@ function generateAgreementReport(households, firmName) {
             ${LEA_LOGO_SVG}
             <div class="border-l border-slate-200 pl-4">
               <h1 class="text-2xl font-bold text-slate-900">Client Agreement Coverage <span class="text-base font-normal text-slate-400">— a LEA Claude Skill</span></h1>
-              <p class="text-slate-500 text-sm">${firmName || 'Agreement Report'}</p>
+              <p class="text-slate-500 text-sm">${firmName ? escapeHtml(firmName) : 'Agreement Report'}</p>
             </div>
           </div>
         </div>
@@ -120,7 +124,7 @@ function generateAgreementReport(households, firmName) {
             const stickyBg = missingRow ? 'bg-red-50' : (i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50');
             return `
           <tr class="border-b border-slate-100 ${rowBg} hover:bg-slate-50">
-            <td class="py-2.5 px-4 font-medium text-slate-900 sticky left-0 ${stickyBg}">${h.name}</td>
+            <td class="py-2.5 px-4 font-medium text-slate-900 sticky left-0 ${stickyBg}">${escapeHtml(h.name)}</td>
             <td class="py-2.5 px-2 text-center font-medium text-slate-700">${h.totalFiles}</td>
             ${AGREEMENT_TYPES.map(type => {
               const count = h.typeCounts[type];
@@ -164,7 +168,7 @@ function generateAgreementReport(households, firmName) {
   </div>
 
   <script>
-    const reportData = ${JSON.stringify(households)};
+    const reportData = ${JSON.stringify(households).replace(/<\//g, '<\\/')};
 
     // Agreement type classifier (mirrors server-side logic)
     const TYPE_RULES = [
