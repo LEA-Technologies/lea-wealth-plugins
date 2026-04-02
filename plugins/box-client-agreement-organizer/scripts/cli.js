@@ -224,6 +224,10 @@ async function cmdOrganizeAgreements(jsonStr) {
     fail(`Invalid JSON: ${e.message}`);
   }
 
+  if (typeof plan !== 'object' || plan === null) {
+    fail('Expected JSON object');
+  }
+
   const { target_folder_id, agreements } = plan;
   if ((!target_folder_id && !plan.create_target_folder) || !agreements || !Array.isArray(agreements)) {
     fail('JSON must include target_folder_id (or create_target_folder + parent_folder_id) and agreements array');
@@ -319,6 +323,10 @@ async function cmdSaveConfig(skill, jsonStr) {
     config = JSON.parse(jsonStr);
   } catch (e) {
     fail(`Invalid JSON: ${e.message}`);
+  }
+
+  if (typeof config !== 'object' || config === null) {
+    fail('Expected JSON object');
   }
 
   try {

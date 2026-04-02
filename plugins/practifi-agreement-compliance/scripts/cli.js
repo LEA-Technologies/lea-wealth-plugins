@@ -456,8 +456,19 @@ async function cmdGenerateReport(type, extraArgs) {
 async function cmdSaveConfig(skill, jsonStr) {
   if (!skill || !jsonStr) fail('Usage: cli.js save-config <skill_name> \'<json>\'');
   const api = require('./lea-skills-api');
+
+  let config;
   try {
-    const config = JSON.parse(jsonStr);
+    config = JSON.parse(jsonStr);
+  } catch (e) {
+    fail(`Invalid JSON: ${e.message}`);
+  }
+
+  if (typeof config !== 'object' || config === null) {
+    fail('Expected JSON object');
+  }
+
+  try {
     const result = await api.saveConfig(skill, config);
     output({ success: true, skill_name: skill, config: result.config });
   } catch (err) { fail(err.message); }

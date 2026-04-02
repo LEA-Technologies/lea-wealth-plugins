@@ -17,8 +17,10 @@ async function getAccessToken() {
 
   const result = await api.getBoxCredentials();
   cachedToken = result.credentials.access_token;
-  // Assume 60 min TTL from when we fetched it
-  tokenExpiresAt = Date.now() + 55 * 60 * 1000;
+  const ttl = result.credentials.expires_in
+    ? result.credentials.expires_in * 1000
+    : 55 * 60 * 1000;
+  tokenExpiresAt = Date.now() + ttl;
   return cachedToken;
 }
 
@@ -45,7 +47,8 @@ async function boxRequest(method, path, body) {
       const retry = await fetch(`https://api.box.com/2.0${path}`, opts);
       if (!retry.ok) {
         const errBody = await retry.text();
-        throw new Error(`Box API ${retry.status}: ${errBody}`);
+        console.error(`Box API error ${retry.status}:`, errBody);
+        throw new Error(`Box API request failed (${retry.status}). Check connection and retry.`);
       }
       return retry.json();
     } catch (err) {
@@ -55,7 +58,8 @@ async function boxRequest(method, path, body) {
 
   if (!response.ok) {
     const errBody = await response.text();
-    throw new Error(`Box API ${response.status}: ${errBody}`);
+    console.error(`Box API error ${response.status}:`, errBody);
+    throw new Error(`Box API request failed (${response.status}). Check connection and retry.`);
   }
 
   return response.json();

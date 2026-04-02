@@ -23,9 +23,9 @@ function loadToken() {
 
 function saveToken(data) {
   if (!fs.existsSync(TOKEN_DIR)) {
-    fs.mkdirSync(TOKEN_DIR, { recursive: true });
+    fs.mkdirSync(TOKEN_DIR, { recursive: true, mode: 0o700 });
   }
-  fs.writeFileSync(WB_TOKEN_FILE, JSON.stringify(data, null, 2));
+  fs.writeFileSync(WB_TOKEN_FILE, JSON.stringify(data, null, 2), { mode: 0o600 });
 }
 
 function getToken() {
@@ -62,7 +62,8 @@ async function wealthboxRequest(method, endpoint, body) {
     const retry = await fetch(url, opts);
     if (!retry.ok) {
       const errBody = await retry.text();
-      throw new Error(`Wealthbox API ${retry.status}: ${errBody}`);
+      console.error(`Wealthbox API error ${retry.status}:`, errBody);
+      throw new Error(`Wealthbox API request failed (${retry.status}). Check connection and retry.`);
     }
     return retry.json();
   }
@@ -73,7 +74,8 @@ async function wealthboxRequest(method, endpoint, body) {
 
   if (!response.ok) {
     const errBody = await response.text();
-    throw new Error(`Wealthbox API ${response.status}: ${errBody}`);
+    console.error(`Wealthbox API error ${response.status}:`, errBody);
+    throw new Error(`Wealthbox API request failed (${response.status}). Check connection and retry.`);
   }
 
   return response.json();

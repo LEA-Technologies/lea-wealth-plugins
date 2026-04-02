@@ -51,7 +51,7 @@ function generateAuditReport(auditData, firmName) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Wealthbox Data Completeness Report${firmName ? ' - ' + firmName : ''}</title>
+  <title>Wealthbox Data Completeness Report${firmName ? ' - ' + escapeHtml(firmName) : ''}</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @media print { .no-print { display: none; } }
@@ -68,7 +68,7 @@ function generateAuditReport(auditData, firmName) {
             ${LEA_LOGO_SVG}
             <div class="border-l border-slate-200 pl-4">
               <h1 class="text-2xl font-bold text-slate-900">Wealthbox Data Completeness Audit <span class="text-base font-normal text-slate-400">- a LEA Claude Skill</span></h1>
-              <p class="text-slate-500 text-sm">${firmName || 'CRM Data Completeness Report'}</p>
+              <p class="text-slate-500 text-sm">${firmName ? escapeHtml(firmName) : 'CRM Data Completeness Report'}</p>
             </div>
           </div>
         </div>
@@ -190,7 +190,7 @@ function generateAuditReport(auditData, firmName) {
   </div>
 
   <script>
-    const reportContacts = ${JSON.stringify(contacts)};
+    const reportContacts = ${JSON.stringify(contacts).replace(/<\//g, '<\\/')};
 
     function exportCSV() {
       const headers = ['Name', 'Email', 'Phone', 'Date of Birth', 'Household', 'Assets', 'Status', 'Score', 'Missing Fields Count', 'Missing Fields'];

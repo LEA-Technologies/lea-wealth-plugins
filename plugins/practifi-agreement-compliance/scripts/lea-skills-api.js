@@ -11,6 +11,9 @@ const fetch = require('node-fetch');
 const CREDS_DIR = path.join(require('os').homedir(), '.lea-skills');
 const TOKEN_FILE = path.join(CREDS_DIR, 'credentials.json');
 const API_BASE = process.env.LEA_SKILLS_API || 'https://skills.getlea.io';
+if (process.env.LEA_SKILLS_API) {
+  console.error(`⚠ LEA_SKILLS_API override active: ${API_BASE}`);
+}
 
 // -- Token persistence --
 

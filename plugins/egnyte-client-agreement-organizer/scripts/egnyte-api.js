@@ -24,8 +24,10 @@ async function getAuth() {
   const result = await api.getEgnyteCredentials();
   cachedToken = result.credentials.access_token;
   cachedDomain = result.credentials.egnyte_domain;
-  // Assume 60 min TTL from when we fetched it
-  tokenExpiresAt = Date.now() + 55 * 60 * 1000;
+  const ttl = result.credentials.expires_in
+    ? result.credentials.expires_in * 1000
+    : 55 * 60 * 1000;
+  tokenExpiresAt = Date.now() + ttl;
   return { token: cachedToken, domain: cachedDomain };
 }
 
@@ -55,7 +57,8 @@ async function egnyteRequest(method, path, body) {
       const retry = await fetch(retryUrl, opts);
       if (!retry.ok) {
         const errBody = await retry.text();
-        throw new Error(`Egnyte API ${retry.status}: ${errBody}`);
+        console.error(`Egnyte API error ${retry.status}:`, errBody);
+        throw new Error(`Egnyte API request failed (${retry.status}). Check connection and retry.`);
       }
       return retry.json();
     } catch (err) {
@@ -65,7 +68,8 @@ async function egnyteRequest(method, path, body) {
 
   if (!response.ok) {
     const errBody = await response.text();
-    throw new Error(`Egnyte API ${response.status}: ${errBody}`);
+    console.error(`Egnyte API error ${response.status}:`, errBody);
+    throw new Error(`Egnyte API request failed (${response.status}). Check connection and retry.`);
   }
 
   return response.json();

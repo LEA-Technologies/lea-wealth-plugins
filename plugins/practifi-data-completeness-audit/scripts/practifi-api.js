@@ -29,8 +29,10 @@ async function getAuth() {
   const result = await api.getPractifiCredentials();
   cachedToken = result.credentials.access_token;
   cachedInstanceUrl = result.credentials.instance_url;
-  // Assume 55 min TTL from when we fetched it
-  tokenExpiresAt = Date.now() + 55 * 60 * 1000;
+  const ttl = result.credentials.expires_in
+    ? result.credentials.expires_in * 1000
+    : 55 * 60 * 1000;
+  tokenExpiresAt = Date.now() + ttl;
   return { token: cachedToken, instanceUrl: cachedInstanceUrl };
 }
 
@@ -62,7 +64,8 @@ async function sfRequest(method, path, body) {
       const retry = await fetch(retryUrl, opts);
       if (!retry.ok) {
         const errBody = await retry.text();
-        throw new Error(`Salesforce API ${retry.status}: ${errBody}`);
+        console.error(`Practifi API error ${retry.status}:`, errBody);
+        throw new Error(`Practifi API request failed (${retry.status}). Check connection and retry.`);
       }
       return retry.json();
     } catch (err) {
@@ -72,7 +75,8 @@ async function sfRequest(method, path, body) {
 
   if (!response.ok) {
     const errBody = await response.text();
-    throw new Error(`Salesforce API ${response.status}: ${errBody}`);
+    console.error(`Practifi API error ${response.status}:`, errBody);
+    throw new Error(`Practifi API request failed (${response.status}). Check connection and retry.`);
   }
 
   return response.json();
@@ -93,7 +97,8 @@ async function soqlQuery(query) {
     });
     if (!response.ok) {
       const errBody = await response.text();
-      throw new Error(`SOQL pagination failed: ${response.status}: ${errBody}`);
+      console.error(`Practifi API error ${response.status}:`, errBody);
+      throw new Error(`Practifi API request failed (${response.status}). Check connection and retry.`);
     }
     result = await response.json();
     allRecords.push(...result.records);
@@ -117,7 +122,8 @@ async function getCurrentUser() {
   });
   if (!response.ok) {
     const errBody = await response.text();
-    throw new Error(`Userinfo failed: ${response.status}: ${errBody}`);
+    console.error(`Practifi API error ${response.status}:`, errBody);
+    throw new Error(`Practifi API request failed (${response.status}). Check connection and retry.`);
   }
   return response.json();
 }

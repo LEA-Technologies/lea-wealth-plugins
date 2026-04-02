@@ -64,7 +64,10 @@ async function boxGetToken() {
   if (boxToken && Date.now() < boxTokenExpires - 60000) return boxToken;
   const result = await api.getBoxCredentials();
   boxToken = result.credentials.access_token;
-  boxTokenExpires = Date.now() + 55 * 60 * 1000;
+  const boxTtl = result.credentials.expires_in
+    ? result.credentials.expires_in * 1000
+    : 55 * 60 * 1000;
+  boxTokenExpires = Date.now() + boxTtl;
   return boxToken;
 }
 
@@ -84,11 +87,19 @@ async function boxRequest(method, path, body) {
     const newToken = await boxGetToken();
     opts.headers['Authorization'] = `Bearer ${newToken}`;
     const retry = await fetch(`https://api.box.com/2.0${path}`, opts);
-    if (!retry.ok) throw new Error(`Box API ${retry.status}: ${await retry.text()}`);
+    if (!retry.ok) {
+      const errBody = await retry.text();
+      console.error(`Vault API error ${retry.status}:`, errBody);
+      throw new Error(`Vault API request failed (${retry.status}). Check connection and retry.`);
+    }
     return retry.json();
   }
 
-  if (!response.ok) throw new Error(`Box API ${response.status}: ${await response.text()}`);
+  if (!response.ok) {
+    const errBody = await response.text();
+    console.error(`Vault API error ${response.status}:`, errBody);
+    throw new Error(`Vault API request failed (${response.status}). Check connection and retry.`);
+  }
   return response.json();
 }
 
@@ -147,7 +158,10 @@ async function spGetToken() {
   if (spToken && Date.now() < spTokenExpires - 60000) return spToken;
   const result = await api.getSharePointCredentials();
   spToken = result.credentials.access_token;
-  spTokenExpires = Date.now() + 55 * 60 * 1000;
+  const spTtl = result.credentials.expires_in
+    ? result.credentials.expires_in * 1000
+    : 55 * 60 * 1000;
+  spTokenExpires = Date.now() + spTtl;
   return spToken;
 }
 
@@ -167,11 +181,19 @@ async function spRequest(method, path, body) {
     const newToken = await spGetToken();
     opts.headers['Authorization'] = `Bearer ${newToken}`;
     const retry = await fetch(`https://graph.microsoft.com/v1.0${path}`, opts);
-    if (!retry.ok) throw new Error(`Graph API ${retry.status}: ${await retry.text()}`);
+    if (!retry.ok) {
+      const errBody = await retry.text();
+      console.error(`Vault API error ${retry.status}:`, errBody);
+      throw new Error(`Vault API request failed (${retry.status}). Check connection and retry.`);
+    }
     return retry.json();
   }
 
-  if (!response.ok) throw new Error(`Graph API ${response.status}: ${await response.text()}`);
+  if (!response.ok) {
+    const errBody = await response.text();
+    console.error(`Vault API error ${response.status}:`, errBody);
+    throw new Error(`Vault API request failed (${response.status}). Check connection and retry.`);
+  }
   return response.json();
 }
 
@@ -241,7 +263,10 @@ async function egGetAuth() {
   const result = await api.getEgnyteCredentials();
   egToken = result.credentials.access_token;
   egDomain = result.credentials.egnyte_domain;
-  egTokenExpires = Date.now() + 55 * 60 * 1000;
+  const egTtl = result.credentials.expires_in
+    ? result.credentials.expires_in * 1000
+    : 55 * 60 * 1000;
+  egTokenExpires = Date.now() + egTtl;
   return { token: egToken, domain: egDomain };
 }
 
@@ -264,11 +289,19 @@ async function egRequest(method, path, body) {
     opts.headers['Authorization'] = `Bearer ${auth.token}`;
     const retryUrl = `https://${auth.domain}.egnyte.com/pubapi/v1${path}`;
     const retry = await fetch(retryUrl, opts);
-    if (!retry.ok) throw new Error(`Egnyte API ${retry.status}: ${await retry.text()}`);
+    if (!retry.ok) {
+      const errBody = await retry.text();
+      console.error(`Vault API error ${retry.status}:`, errBody);
+      throw new Error(`Vault API request failed (${retry.status}). Check connection and retry.`);
+    }
     return retry.json();
   }
 
-  if (!response.ok) throw new Error(`Egnyte API ${response.status}: ${await response.text()}`);
+  if (!response.ok) {
+    const errBody = await response.text();
+    console.error(`Vault API error ${response.status}:`, errBody);
+    throw new Error(`Vault API request failed (${response.status}). Check connection and retry.`);
+  }
   return response.json();
 }
 
