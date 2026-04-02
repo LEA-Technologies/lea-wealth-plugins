@@ -1,0 +1,390 @@
+#!/usr/bin/env bash
+# Plugin release script
+# Bumps version across all plugin files, commits, tags, and creates a GitHub Release
+
+set -euo pipefail
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+NC='\033[0m' # No Color
+
+# Script directory (resolve symlinks)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Files to update
+MARKETPLACE_JSON="$REPO_ROOT/.claude-plugin/marketplace.json"
+PLUGIN_JSONS=("$REPO_ROOT"/plugins/*/.claude-plugin/plugin.json)
+
+# Print helpers
+print_step() {
+  local step_num="$1"
+  local total_steps="$2"
+  local description="$3"
+
+  echo ""
+  echo -e "${BOLD}${BLUE}[$step_num/$total_steps]${NC} ${BOLD}$description${NC}"
+  echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+}
+
+print_success() {
+  echo -e "${GREEN}✓${NC} $1"
+}
+
+print_error() {
+  echo -e "${RED}✗${NC} $1" >&2
+}
+
+print_warning() {
+  echo -e "${YELLOW}!${NC} $1"
+}
+
+# Show usage
+usage() {
+  cat << EOF
+Release LEA Wealth Plugins
+
+Usage: $(basename "$0") <major|minor|patch> [--dry-run]
+
+Description:
+  Bumps the version in all plugin files, commits the change, creates a git tag,
+  pushes to origin, and creates a GitHub Release with auto-generated notes.
+
+  Updates version in:
+    - .claude-plugin/marketplace.json (all plugin entries)
+    - plugins/*/.claude-plugin/plugin.json (each plugin)
+
+Options:
+  major       Bump major version (1.1.0 → 2.0.0)
+  minor       Bump minor version (1.1.0 → 1.2.0)
+  patch       Bump patch version (1.1.0 → 1.1.1)
+  --dry-run   Preview changes without committing, tagging, or pushing
+
+Examples:
+  $(basename "$0") patch            # 1.1.0 → 1.1.1
+  $(basename "$0") minor            # 1.1.0 → 1.2.0
+  $(basename "$0") major            # 1.1.0 → 2.0.0
+  $(basename "$0") patch --dry-run  # Preview only
+
+EOF
+}
+
+# Parse arguments
+BUMP_TYPE=""
+DRY_RUN=false
+
+for arg in "$@"; do
+  case "$arg" in
+    major|minor|patch)
+      BUMP_TYPE="$arg"
+      ;;
+    --dry-run)
+      DRY_RUN=true
+      ;;
+    -h|--help|help)
+      usage
+      exit 0
+      ;;
+    *)
+      print_error "Unknown argument: $arg"
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+if [ -z "$BUMP_TYPE" ]; then
+  print_error "Bump type required: major, minor, or patch"
+  usage
+  exit 1
+fi
+
+# Parse current version from marketplace.json
+parse_current_version() {
+  # Extract the first "version": "X.Y.Z" from marketplace.json
+  grep -m1 '"version"' "$MARKETPLACE_JSON" | sed 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/'
+}
+
+# Calculate new version
+calc_new_version() {
+  local current="$1"
+  local bump="$2"
+
+  local major minor patch
+  IFS='.' read -r major minor patch <<< "$current"
+
+  case "$bump" in
+    major) echo "$((major + 1)).0.0" ;;
+    minor) echo "${major}.$((minor + 1)).0" ;;
+    patch) echo "${major}.${minor}.$((patch + 1))" ;;
+  esac
+}
+
+# Main release function
+main() {
+  local total_steps=7
+  if $DRY_RUN; then
+    total_steps=4
+  fi
+
+  # Read current version
+  local current_version
+  current_version=$(parse_current_version)
+
+  if [ -z "$current_version" ]; then
+    print_error "Could not read current version from $MARKETPLACE_JSON"
+    exit 1
+  fi
+
+  local new_version
+  new_version=$(calc_new_version "$current_version" "$BUMP_TYPE")
+
+  # Print header
+  echo ""
+  echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+  echo -e "${CYAN}${BOLD}  LEA WEALTH PLUGINS RELEASE${NC}"
+  echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+  echo ""
+  echo -e "  ${BOLD}Bump:${NC}        $BUMP_TYPE"
+  echo -e "  ${BOLD}Version:${NC}     $current_version → $new_version"
+  echo -e "  ${BOLD}Date:${NC}        $(date '+%Y-%m-%d %H:%M:%S')"
+  if $DRY_RUN; then
+    echo -e "  ${BOLD}Mode:${NC}        ${YELLOW}DRY RUN${NC}"
+  fi
+  echo ""
+  echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+  echo ""
+
+  # Step 1: Pre-flight checks
+  print_step 1 $total_steps "Pre-flight checks"
+
+  if ! $DRY_RUN; then
+    # Must be on main branch
+    local current_branch
+    current_branch=$(git -C "$REPO_ROOT" rev-parse --abbrev-ref HEAD)
+    if [ "$current_branch" != "main" ]; then
+      print_error "Not on main branch (currently on: $current_branch)"
+      echo -e "${YELLOW}  Switch to main first: git checkout main${NC}"
+      exit 1
+    fi
+    print_success "On main branch"
+
+    # Working directory must be clean
+    if ! git -C "$REPO_ROOT" diff --quiet || ! git -C "$REPO_ROOT" diff --cached --quiet; then
+      print_error "Working directory is not clean"
+      echo -e "${YELLOW}  Commit or stash your changes first${NC}"
+      exit 1
+    fi
+    if [ -n "$(git -C "$REPO_ROOT" ls-files --others --exclude-standard)" ]; then
+      print_error "Untracked files present"
+      echo -e "${YELLOW}  Commit or remove untracked files first${NC}"
+      exit 1
+    fi
+    print_success "Working directory clean"
+
+    # gh CLI must be available
+    if ! command -v gh &> /dev/null; then
+      print_error "GitHub CLI (gh) not found"
+      echo -e "${YELLOW}  Install: brew install gh${NC}"
+      exit 1
+    fi
+    print_success "GitHub CLI available"
+
+    # main must be up to date with origin
+    git -C "$REPO_ROOT" fetch origin main --quiet
+    local local_sha remote_sha
+    local_sha=$(git -C "$REPO_ROOT" rev-parse HEAD)
+    remote_sha=$(git -C "$REPO_ROOT" rev-parse origin/main)
+    if [ "$local_sha" != "$remote_sha" ]; then
+      print_error "Local main is not up to date with origin/main"
+      echo -e "${YELLOW}  Run: git pull --ff-only origin main${NC}"
+      exit 1
+    fi
+    print_success "main is up to date with origin"
+  else
+    print_success "Skipping checks (dry run)"
+  fi
+
+  print_success "Current version: $current_version"
+  print_success "New version: $new_version"
+
+  # Step 2: Security checks
+  print_step 2 $total_steps "Security checks"
+
+  # Verify all copies of lea-skills-api.js are identical
+  local api_js_files=("$REPO_ROOT"/plugins/*/scripts/lea-skills-api.js)
+  if [ ${#api_js_files[@]} -gt 0 ]; then
+    local reference_checksum
+    reference_checksum=$(md5 -q "${api_js_files[0]}")
+    local api_js_ok=true
+    for f in "${api_js_files[@]}"; do
+      if [ "$(md5 -q "$f")" != "$reference_checksum" ]; then
+        print_error "lea-skills-api.js mismatch: ${f#"$REPO_ROOT"/}"
+        api_js_ok=false
+      fi
+    done
+    if $api_js_ok; then
+      print_success "lea-skills-api.js identical across ${#api_js_files[@]} plugins"
+    else
+      exit 1
+    fi
+  fi
+
+  # Scan for non-HTTPS API endpoints in plugin code
+  if grep -r 'LEA_SKILLS_API\|skills\.getlea\.io' "$REPO_ROOT/plugins/" --include='*.js' -l 2>/dev/null | xargs grep -l 'http://' 2>/dev/null; then
+    print_error "Found non-HTTPS API endpoint in plugin code"
+    exit 1
+  fi
+  print_success "No non-HTTPS API endpoints found"
+
+  # npm audit on each plugin's scripts directory
+  local audit_failed=false
+  for dir in "$REPO_ROOT"/plugins/*/scripts; do
+    if [ -f "$dir/package.json" ]; then
+      local plugin_name
+      plugin_name=$(basename "$(dirname "$dir")")
+      if ! npm audit --prefix "$dir" --audit-level=high --omit=dev 2>/dev/null 1>/dev/null; then
+        print_error "npm audit failed: $plugin_name"
+        audit_failed=true
+      fi
+    fi
+  done
+  if $audit_failed; then
+    echo -e "${YELLOW}  Fix vulnerabilities before releasing: npm audit fix --prefix plugins/<name>/scripts${NC}"
+    exit 1
+  fi
+  print_success "npm audit passed for all plugins"
+
+  # Step 3: Enumerate files
+  print_step 3 $total_steps "Files to update"
+
+  local file_count=0
+  local relative_path
+
+  relative_path="${MARKETPLACE_JSON#"$REPO_ROOT"/}"
+  echo -e "  ${BOLD}$relative_path${NC}"
+  file_count=$((file_count + 1))
+
+  for pjson in "${PLUGIN_JSONS[@]}"; do
+    relative_path="${pjson#"$REPO_ROOT"/}"
+    echo -e "  ${BOLD}$relative_path${NC}"
+    file_count=$((file_count + 1))
+  done
+
+  print_success "$file_count files will be updated"
+
+  # Step 4: Update version in all files
+  print_step 4 $total_steps "Update versions"
+
+  if $DRY_RUN; then
+    print_warning "DRY RUN — no files modified"
+    echo ""
+    echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${GREEN}${BOLD}  DRY RUN COMPLETE${NC}"
+    echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo ""
+    echo -e "  Run without ${BOLD}--dry-run${NC} to release v${new_version}"
+    echo ""
+    echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo ""
+    exit 0
+  fi
+
+  # Confirmation
+  echo ""
+  echo -e "${YELLOW}${BOLD}This will release v${new_version} (${BUMP_TYPE} bump from ${current_version})${NC}"
+  echo ""
+  echo "  1. Update version in $file_count files"
+  echo "  2. Commit: \"Release v${new_version}\""
+  echo "  3. Tag: v${new_version}"
+  echo "  4. Push commit + tag to origin"
+  echo "  5. Create GitHub Release"
+  echo ""
+  echo -e "  ${GREEN}✓${NC} Security checks already passed"
+  echo ""
+
+  read -p "Type 'yes' to release: " -r
+  echo
+
+  if [ "$REPLY" != "yes" ]; then
+    echo "Release cancelled."
+    exit 0
+  fi
+
+  # Perform the version update using sed
+  # macOS sed requires '' after -i, Linux does not — use a temp backup suffix and remove it
+  sed -i.bak "s/\"version\": \"${current_version}\"/\"version\": \"${new_version}\"/g" "$MARKETPLACE_JSON"
+  rm -f "${MARKETPLACE_JSON}.bak"
+  print_success "Updated marketplace.json"
+
+  for pjson in "${PLUGIN_JSONS[@]}"; do
+    sed -i.bak "s/\"version\": \"${current_version}\"/\"version\": \"${new_version}\"/g" "$pjson"
+    rm -f "${pjson}.bak"
+  done
+  print_success "Updated ${#PLUGIN_JSONS[@]} plugin.json files"
+
+  # Step 5: Commit
+  print_step 5 $total_steps "Commit version bump"
+
+  git -C "$REPO_ROOT" add "$MARKETPLACE_JSON" "${PLUGIN_JSONS[@]}"
+  git -C "$REPO_ROOT" commit -m "Release v${new_version}"
+  print_success "Committed: Release v${new_version}"
+
+  # Step 6: Tag
+  print_step 6 $total_steps "Create release tag"
+
+  git -C "$REPO_ROOT" tag -a "v${new_version}" -m "Release v${new_version}"
+  print_success "Created tag: v${new_version}"
+
+  git -C "$REPO_ROOT" push origin main
+  git -C "$REPO_ROOT" push origin "v${new_version}"
+  print_success "Pushed commit and tag to origin"
+
+  # Step 7: GitHub Release
+  print_step 7 $total_steps "Create GitHub Release"
+
+  local gh_release_url=""
+  local previous_tag
+  previous_tag=$(git -C "$REPO_ROOT" tag -l "v*" --sort=-v:refname | grep -v "v${new_version}" | head -1)
+
+  local gh_args=(
+    gh release create "v${new_version}"
+    --title "v${new_version}"
+    --generate-notes
+    --repo "$(git -C "$REPO_ROOT" remote get-url origin)"
+  )
+
+  if [ -n "$previous_tag" ]; then
+    gh_args+=(--notes-start-tag "$previous_tag")
+  fi
+
+  if gh_release_url=$("${gh_args[@]}" 2>&1); then
+    print_success "GitHub Release created: v${new_version}"
+  else
+    print_error "Failed to create GitHub Release"
+    echo -e "${YELLOW}  Manually create: gh release create v${new_version} --generate-notes${NC}"
+    gh_release_url=""
+  fi
+
+  # Done
+  echo ""
+  echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+  echo -e "${GREEN}${BOLD}  ✓ RELEASE SUCCESSFUL${NC}"
+  echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+  echo ""
+  echo -e "  ${BOLD}Version:${NC}     v${new_version}"
+  echo -e "  ${BOLD}Tag:${NC}         v${new_version}"
+  if [ -n "$gh_release_url" ]; then
+    echo -e "  ${BOLD}Release:${NC}     $gh_release_url"
+  fi
+  echo ""
+  echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+  echo ""
+}
+
+main
