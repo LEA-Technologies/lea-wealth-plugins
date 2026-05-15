@@ -44,9 +44,9 @@ LEA servers never see, store, or proxy CRM or vault data.
 ## Attack Surface
 
 ### Marketplace trust boundary
-Skills are distributed through the LEA plugin marketplace on GitHub (`LEA-Technologies/lea-wealth-plugins`). This is the same trust model as npm packages or VS Code extensions — users trust the publisher.
+Skills are distributed through the LEA plugin marketplace on GitHub (`LEA-Sales-Marketing/lea-wealth-plugins`). This is the same trust model as npm packages or VS Code extensions — users trust the publisher.
 
-- **Malicious code in skills:** Requires write access to the LEA-Technologies GitHub org
+- **Malicious code in skills:** Requires write access to the LEA-Sales-Marketing GitHub org
 - **Social engineering:** An attacker could create a fake marketplace and convince a user to add it. This requires active deception and is not specific to LEA.
 
 ### Local attack surface
